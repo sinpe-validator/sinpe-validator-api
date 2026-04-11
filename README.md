@@ -1,1 +1,0 @@
-# sinpe-validator-api
