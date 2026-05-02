@@ -27,4 +27,10 @@
         <ProjectReference Include="..\..\src\Infrastructure\Infrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Common\Behaviours\" />
+      <Folder Include="Common\Exceptions\" />
+      <Folder Include="Common\Mappings\" />
+    </ItemGroup>
+
 </Project>
