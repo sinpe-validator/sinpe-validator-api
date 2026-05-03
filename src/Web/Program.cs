@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
 builder.Services.AddCors();
+builder.Services.AddControllers();
 
-// Database Configuration
+//BD
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<SinpePaymentsDbContext>(options =>
     options.UseSqlServer(connectionString)
@@ -45,6 +45,9 @@ app.UseCors(static builder =>
         .AllowAnyOrigin());
 
 app.UseFileServer();
+
+// Map controller routes
+app.MapControllers();
 
 app.MapOpenApi();
 app.MapScalarApiReference();
