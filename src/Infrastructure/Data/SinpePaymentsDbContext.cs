@@ -69,8 +69,17 @@ public class SinpePaymentsDbContext : DbContext
         {
             entity.HasKey(e => e.IdOrder);
             entity.Property(e => e.Amount).HasPrecision(10, 2);
-            entity.Property(e => e.Description).HasMaxLength(255);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.OrderCode)
+      .HasMaxLength(10);
+
+            entity.Property(e => e.Description)
+                .HasMaxLength(255);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("GETDATE()");
+
+            entity.HasIndex(e => new { e.OrderCode, e.IdStatus })
+                .HasDatabaseName("IX_Orders_OrderCode_Status");
 
             entity.HasOne(e => e.Status)
                 .WithMany(s => s.Orders)

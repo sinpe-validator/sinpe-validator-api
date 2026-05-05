@@ -11,6 +11,8 @@ namespace sinpe_validator_api.Domain.Entities
         public DateTime ExpiresAt { get; set; }
         public string? Description { get; set; }
 
+        public string? OrderCode { get; set; }
+
         public OrderStatus? Status { get; set; }
         public ICollection<OrderPayment> Payments { get; set; } = new List<OrderPayment>();
     }
