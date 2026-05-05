@@ -1,13 +1,17 @@
 using Scalar.AspNetCore;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Web.Endpoints;
+using Application.Contracts;
+using Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container
 builder.Services.AddCors();
-builder.Services.AddControllers();
+builder.Services.AddScoped<ISmsParsingService, SmsParsingService>();
 
-//BD
+// Database Configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<SinpePaymentsDbContext>(options =>
     options.UseSqlServer(connectionString)
@@ -46,12 +50,11 @@ app.UseCors(static builder =>
 
 app.UseFileServer();
 
-// Map controller routes
-app.MapControllers();
-
 app.MapOpenApi();
 app.MapScalarApiReference();
 
 app.UseExceptionHandler(options => { });
+
+app.MapApiEndpoints();
 
 app.Run();

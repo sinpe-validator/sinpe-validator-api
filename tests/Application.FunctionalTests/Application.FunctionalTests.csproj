@@ -33,7 +33,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Web\Web.csproj" />
-        <ProjectReference Include="..\TestAppHost\TestAppHost.csproj" />
     </ItemGroup>
 
     <ItemGroup>
