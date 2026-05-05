@@ -73,7 +73,7 @@ public class SmsParsingService : ISmsParsingService
 
         var amountStr = match.Groups[1].Value.Trim();
         
-        amountStr = amountStr.Replace(",", ".");
+        amountStr = amountStr.Replace(",", "");
         
         if (!decimal.TryParse(amountStr, System.Globalization.CultureInfo.InvariantCulture, out var amount) || amount <= 0)
         {
