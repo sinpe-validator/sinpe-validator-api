@@ -137,3 +137,19 @@ DELETE {{Web_HostAddress}}/api/TodoItems/1
 Authorization: Bearer {{BearerToken}}
 
 ###
+
+### SINPE - Crear orden de pago
+
+@Sinpe_HostAddress = http://localhost:5081
+
+POST {{Sinpe_HostAddress}}/api/orders/
+Content-Type: application/json
+
+{
+  "amount": 8000.00,
+  "description": "Orden de prueba desde app"
+}
+
+### SINPE - Listar órdenes
+
+GET {{Sinpe_HostAddress}}/api/orders/
