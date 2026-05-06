@@ -396,6 +396,18 @@ FodyWeavers.xsd
 # Local History for Visual Studio Code
 .history/
 
+# Environment variables and sensitive configuration
+.env
+.env.local
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+# API Keys and secrets
+secrets.json
+*.key
+*.pem
+
 # Windows Installer files from build outputs
 *.cab
 *.msi
