@@ -15,6 +15,7 @@ public class SinpePaymentsDbContext : DbContext
     public DbSet<OrderPayment> OrderPayments { get; set; }
     public DbSet<OrderStatus> OrderStatuses { get; set; }
     public DbSet<PaymentStatus> PaymentStatuses { get; set; }
+    public DbSet<FraudAttempt> FraudAttempts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,6 +44,7 @@ public class SinpePaymentsDbContext : DbContext
         ConfigureOrder(modelBuilder);
         ConfigureReceivedSms(modelBuilder);
         ConfigureOrderPayment(modelBuilder);
+        ConfigureFraudAttempt(modelBuilder);
     }
 
     private static void ConfigureOrderStatus(ModelBuilder modelBuilder)
@@ -123,6 +125,24 @@ public class SinpePaymentsDbContext : DbContext
                 .WithMany(s => s.Payments)
                 .HasForeignKey(e => e.IdStatus)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+    private static void ConfigureFraudAttempt(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<FraudAttempt>(entity =>
+        {
+            entity.HasKey(e => e.IdAttempt);
+
+            entity.Property(e => e.InconsistencyType)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(e => e.Detail)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.Property(e => e.DetectedAt)
+                .HasDefaultValueSql("GETDATE()");
         });
     }
 }

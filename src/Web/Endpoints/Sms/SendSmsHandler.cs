@@ -51,6 +51,16 @@ public static class SendSmsHandler
                     parseResult.SinpeReference
                 );
 
+                var fraudAttempt = new FraudAttempt
+                {
+                    InconsistencyType = "DuplicateReference",
+                    Detail = $"La referencia {parseResult.SinpeReference} ya fue registrada.",
+                    DetectedAt = DateTime.Now
+                };
+                dbContext.FraudAttempts.Add(fraudAttempt);
+
+                await dbContext.SaveChangesAsync();
+
                 return Results.Conflict(new
                 {
                     success = false,
