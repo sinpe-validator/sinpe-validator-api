@@ -35,5 +35,10 @@ public static class EndpointExtensions
     .WithDescription("Lista las órdenes de pago generadas")
     .Produces<List<OrderDto>>(StatusCodes.Status200OK);
 
+        ordersGroup.MapGet("/{id:int}", GetOrderByIdHandler.Handle)
+    .WithName("GetOrderById")
+    .WithDescription("Retorna una orden por su ID")
+    .Produces<OrderDto>(StatusCodes.Status200OK)
+    .Produces(StatusCodes.Status404NotFound);
     }
 }
