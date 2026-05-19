@@ -8,18 +8,16 @@ namespace sinpe_validator_api.Web.Endpoints.Sms;
 
 public static class SendSmsHandler
 {
-    private const int OrderStatusPending = 1;
-    private const int OrderStatusPaid = 2;
-    private const int OrderStatusUnderReview = 4;
-
     private const int PaymentStatusApproved = 1;
     private const int PaymentStatusRejected = 2;
     private const int PaymentStatusUnderReview = 3;
+    private const int OrderStatusPaid = 2;
 
     public static async Task<IResult> Handle(
         ReceivedSmsDto dto,
         SinpePaymentsDbContext dbContext,
         ISmsParsingService smsParser,
+        ISmsValidationService validationService,
         ILogger<Program> logger)
     {
         try
@@ -41,36 +39,6 @@ public static class SendSmsHandler
                 });
             }
 
-            var referenceExists = await dbContext.ReceivedSms
-                .AnyAsync(s => s.SinpeReference == parseResult.SinpeReference);
-
-            if (referenceExists)
-            {
-                logger.LogWarning(
-                    "Referencia SINPE duplicada detectada: {Reference}",
-                    parseResult.SinpeReference
-                );
-
-                var fraudAttempt = new FraudAttempt
-                {
-                    InconsistencyType = "DuplicateReference",
-                    Detail = $"La referencia {parseResult.SinpeReference} ya fue registrada.",
-                    DetectedAt = DateTime.Now
-                };
-                dbContext.FraudAttempts.Add(fraudAttempt);
-
-                await dbContext.SaveChangesAsync();
-
-                return Results.Conflict(new
-                {
-                    success = false,
-                    status = "Rejected",
-                    reason = "La referencia SINPE ya fue registrada previamente.",
-                    reference = parseResult.SinpeReference
-                });
-            }
-
-         
             var receivedAt = DateTime.Now;
 
             var receivedSms = new ReceivedSms
@@ -82,58 +50,41 @@ public static class SendSmsHandler
                 ReceivedAt = receivedAt
             };
 
+            var validationResult = await validationService.ValidateSmsPaymentAsync(
+                parseResult,
+                receivedSms);
+
+            if (!validationResult.IsValid && validationResult.ValidatorName == "DuplicateReferenceValidator")
+            {
+                logger.LogWarning(
+                    "Referencia SINPE duplicada: {Reference}",
+                    parseResult.SinpeReference);
+
+                return Results.Conflict(new
+                {
+                    success = false,
+                    status = "Rejected",
+                    reason = validationResult.RejectionReason,
+                    reference = parseResult.SinpeReference
+                });
+            }
+
             dbContext.ReceivedSms.Add(receivedSms);
             await dbContext.SaveChangesAsync();
 
             Order? order = null;
-            var paymentStatus = PaymentStatusUnderReview;
-            string? rejectionReason = null;
+            var paymentStatus = validationResult.PaymentStatus ?? PaymentStatusUnderReview;
+            var rejectionReason = validationResult.RejectionReason;
 
-            if (string.IsNullOrWhiteSpace(parseResult.Description))
-            {
-                rejectionReason = "El SMS no contiene código de orden en la descripción.";
-            }
-            else
+            if (!string.IsNullOrWhiteSpace(parseResult.Description))
             {
                 var orderCode = parseResult.Description.Trim();
-
                 order = await dbContext.Orders
-                    .FirstOrDefaultAsync(o =>
-                        o.OrderCode == orderCode &&
-                        o.IdStatus == OrderStatusPending);
+                    .FirstOrDefaultAsync(o => o.OrderCode == orderCode);
 
-                if (order is null)
+                if (order is not null && validationResult.OrderStatus.HasValue)
                 {
-                    rejectionReason = $"No existe una orden pendiente con el código '{orderCode}'.";
-                }
-                else if (parseResult.Amount != order.Amount)
-                {
-                    paymentStatus = PaymentStatusRejected;
-                    order.IdStatus = OrderStatusUnderReview;
-
-                    rejectionReason =
-                        $"El monto recibido ({parseResult.Amount}) no coincide con el monto de la orden ({order.Amount}).";
-                }
-                else if (receivedAt < order.CreatedAt)
-                {
-                    paymentStatus = PaymentStatusUnderReview;
-                    order.IdStatus = OrderStatusUnderReview;
-
-                    rejectionReason =
-                        $"Fecha inconsistente: el SMS fue recibido antes de la creación de la orden. Orden: {order.CreatedAt}, SMS: {receivedAt}.";
-                }
-                else if (receivedAt > order.ExpiresAt)
-                {
-                    paymentStatus = PaymentStatusUnderReview;
-                    order.IdStatus = OrderStatusUnderReview;
-
-                    rejectionReason =
-                        $"Pago fuera de tiempo. La orden expiró en {order.ExpiresAt} y el SMS fue recibido en {receivedAt}.";
-                }
-                else
-                {
-                    paymentStatus = PaymentStatusApproved;
-                    order.IdStatus = OrderStatusPaid;
+                    order.IdStatus = validationResult.OrderStatus.Value;
                 }
             }
 
@@ -149,7 +100,7 @@ public static class SendSmsHandler
             dbContext.OrderPayments.Add(orderPayment);
             await dbContext.SaveChangesAsync();
 
-            if (paymentStatus == PaymentStatusApproved)
+            if (validationResult.IsValid && paymentStatus == PaymentStatusApproved)
             {
                 logger.LogInformation(
                     "Pago aprobado. Orden: {OrderId}, Código: {OrderCode}, SMS: {SmsId}, Referencia: {Reference}",
