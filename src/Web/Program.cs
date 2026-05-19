@@ -1,15 +1,25 @@
-using Scalar.AspNetCore;
-using Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Web.Endpoints;
 using Application.Contracts;
 using Application.Services;
+using Application.Services.SmsValidation;
+using Application.Services.SmsValidation.Validators;
+using Infrastructure.Data;
+using Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+using Web.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddCors();
 builder.Services.AddScoped<ISmsParsingService, SmsParsingService>();
+builder.Services.AddScoped<ISmsValidationService, SmsValidationService>();
+builder.Services.AddScoped<ISmsValidator, DuplicateReferenceValidator>();
+builder.Services.AddScoped<ISmsValidator, OrderCodeValidator>();
+builder.Services.AddScoped<ISmsValidator, AmountMatchValidator>();
+builder.Services.AddScoped<ISmsValidator, PaymentDateValidator>();
+builder.Services.AddScoped<ISmsRepository, SmsRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 // Database Configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
