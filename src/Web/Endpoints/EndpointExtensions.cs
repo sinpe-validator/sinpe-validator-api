@@ -1,7 +1,8 @@
-
 using Application.DTOs;
 using sinpe_validator_api.Web.Endpoints.Orders;
 using sinpe_validator_api.Web.Endpoints.Sms;
+using Web.Endpoints.Orders;
+
 namespace Web.Endpoints;
 
 public static class EndpointExtensions
@@ -18,10 +19,10 @@ public static class EndpointExtensions
             .Produces(400)
             .Produces(500);
 
-        // el de ordenes xd: 
+        // Endpoints de órdenes
 
         var ordersGroup = app.MapGroup("/api/orders")
-    .WithName("Orders");
+            .WithName("Orders");
 
         ordersGroup.MapPost("/", CreateOrderHandler.Handle)
             .WithName("CreateOrder")
@@ -31,14 +32,33 @@ public static class EndpointExtensions
             .Produces(StatusCodes.Status500InternalServerError);
 
         ordersGroup.MapGet("/", GetOrdersHandler.Handle)
-    .WithName("GetOrders")
-    .WithDescription("Lista las órdenes de pago generadas")
-    .Produces<List<OrderDto>>(StatusCodes.Status200OK);
+            .WithName("GetOrders")
+            .WithDescription("Lista las órdenes de pago generadas")
+            .Produces<List<OrderDto>>(StatusCodes.Status200OK);
 
         ordersGroup.MapGet("/{id:int}", GetOrderByIdHandler.Handle)
-    .WithName("GetOrderById")
-    .WithDescription("Retorna una orden por su ID")
-    .Produces<OrderDto>(StatusCodes.Status200OK)
-    .Produces(StatusCodes.Status404NotFound);
+            .WithName("GetOrderById")
+            .WithDescription("Retorna una orden por su ID")
+            .Produces<OrderDto>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
+
+        ordersGroup.MapGet("/under-review", GetOrdersUnderReviewHandler.Handle)
+            .WithName("GetOrdersUnderReview")
+            .WithDescription("Lista las órdenes que están en revisión manual junto con el pago y SMS asociado")
+            .Produces<List<OrderUnderReviewResponse>>(StatusCodes.Status200OK);
+
+        ordersGroup.MapPost("/{idOrder:int}/accept-payment", AcceptOrderPaymentHandler.Handle)
+            .WithName("AcceptOrderPayment")
+            .WithDescription("Acepta manualmente una orden en revisión, aprueba el pago asociado y marca la orden como pagada")
+            .Produces<ManualOrderReviewResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound);
+
+        ordersGroup.MapPost("/{idOrder:int}/reject-payment", RejectOrderPaymentHandler.Handle)
+            .WithName("RejectOrderPayment")
+            .WithDescription("Rechaza manualmente una orden en revisión, rechaza el pago asociado y guarda la razón del rechazo")
+            .Produces<ManualOrderReviewResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound);
     }
 }
