@@ -23,6 +23,12 @@ public class OrderRepository : IOrderRepository
                 o.IdStatus == OrderStatusPending);
     }
 
+    public async Task<Order?> GetByCodeAsync(string orderCode)
+    {
+        return await _dbContext.Orders
+            .FirstOrDefaultAsync<Order>(o => o.OrderCode == orderCode);
+    }
+
     public async Task<bool> MarkAsExpiredAsync(int orderId, int expiredStatus)
     {
         var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.IdOrder == orderId);

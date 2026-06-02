@@ -7,6 +7,7 @@ namespace Web.Endpoints.Orders;
 public static class AcceptOrderPaymentHandler
 {
     private const int OrderPaidStatusId = 2;
+    private const int OrderExpiredStatusId = 3;
     private const int OrderUnderReviewStatusId = 4;
 
     private const int PaymentApprovedStatusId = 1;
@@ -27,9 +28,9 @@ public static class AcceptOrderPaymentHandler
             return TypedResults.NotFound("Orden no encontrada.");
         }
 
-        if (order.IdStatus != OrderUnderReviewStatusId)
+        if (order.IdStatus != OrderExpiredStatusId && order.IdStatus != OrderUnderReviewStatusId)
         {
-            return TypedResults.BadRequest("Solo se pueden aceptar órdenes que estén en revisión manual.");
+            return TypedResults.BadRequest("Solo se pueden aceptar órdenes que estén expiradas o en revisión manual.");
         }
 
         var payment = await context.OrderPayments
