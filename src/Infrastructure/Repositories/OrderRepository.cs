@@ -22,4 +22,18 @@ public class OrderRepository : IOrderRepository
                 o.OrderCode == orderCode && 
                 o.IdStatus == OrderStatusPending);
     }
+
+    public async Task<bool> MarkAsExpiredAsync(int orderId, int expiredStatus)
+    {
+        var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.IdOrder == orderId);
+
+        if (order is null)
+            return false;
+
+        order.IdStatus = expiredStatus;
+        _dbContext.Orders.Update(order);
+        await _dbContext.SaveChangesAsync();
+
+        return true;
+    }
 }
