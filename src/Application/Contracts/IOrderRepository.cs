@@ -8,4 +8,5 @@ namespace Application.Contracts;
 public interface IOrderRepository
 {
     Task<Order?> GetByCodeAndPendingStatusAsync(string orderCode);
+    Task<bool> MarkAsExpiredAsync(int orderId, int expiredStatus);
 }
