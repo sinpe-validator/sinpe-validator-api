@@ -60,5 +60,12 @@ public static class EndpointExtensions
             .Produces<ManualOrderReviewResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound);
+
+        ordersGroup.MapPatch("/{id:int}/expire", ExpireOrderHandler.Handle)
+            .WithName("ExpireOrder")
+            .WithDescription("Marca una orden como expirada")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status500InternalServerError);
     }
 }
