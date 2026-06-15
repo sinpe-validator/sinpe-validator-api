@@ -37,7 +37,8 @@ public class SinpePaymentsDbContext : DbContext
         modelBuilder.Entity<PaymentStatus>().HasData(
             new PaymentStatus { IdStatus = 1, Name = "Approved" },
             new PaymentStatus { IdStatus = 2, Name = "Rejected" },
-            new PaymentStatus { IdStatus = 3, Name = "UnderReview" }
+            new PaymentStatus { IdStatus = 3, Name = "UnderReview" },
+            new PaymentStatus { IdStatus = 4, Name = "Unmatched" }
         );
 
         // Configurations
