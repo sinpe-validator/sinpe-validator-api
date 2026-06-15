@@ -21,7 +21,8 @@ builder.Services.AddScoped<ISmsValidator, PaymentDateValidator>();
 builder.Services.AddScoped<ISmsRepository, SmsRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // Database Configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

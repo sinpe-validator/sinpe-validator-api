@@ -11,6 +11,7 @@ public static class SendSmsHandler
     private const int PaymentStatusApproved = 1;
     private const int PaymentStatusRejected = 2;
     private const int PaymentStatusUnderReview = 3;
+    private const int PaymentStatusUnmatched = 4;
     private const int OrderStatusPaid = 2;
 
     public static async Task<IResult> Handle(
@@ -73,7 +74,6 @@ public static class SendSmsHandler
             await dbContext.SaveChangesAsync();
 
             Order? order = null;
-            var paymentStatus = validationResult.PaymentStatus ?? PaymentStatusUnderReview;
             var rejectionReason = validationResult.RejectionReason;
 
             if (!string.IsNullOrWhiteSpace(parseResult.Description))
@@ -87,6 +87,10 @@ public static class SendSmsHandler
                     order.IdStatus = validationResult.OrderStatus.Value;
                 }
             }
+            
+            var paymentStatus = order is null
+                ? PaymentStatusUnmatched
+                : validationResult.PaymentStatus ?? PaymentStatusUnderReview;
 
             var orderPayment = new OrderPayment
             {
@@ -131,11 +135,20 @@ public static class SendSmsHandler
                 rejectionReason
             );
 
+            var statusName = paymentStatus switch
+            {
+                PaymentStatusRejected => "Rejected",
+                PaymentStatusUnmatched => "Unmatched",
+                _ => "UnderReview"
+            };
+
             return Results.Ok(new
             {
                 success = false,
-                status = paymentStatus == PaymentStatusRejected ? "Rejected" : "UnderReview",
-                message = "El SMS fue recibido, pero el pago no fue aprobado automáticamente.",
+                status = statusName,
+                message = paymentStatus == PaymentStatusUnmatched
+                    ? "El SMS fue recibido, pero no se encontró una orden asociada. Queda pendiente de asociación manual."
+                    : "El SMS fue recibido, pero el pago no fue aprobado automáticamente.",
                 reason = rejectionReason,
                 smsId = receivedSms.IdSms,
                 orderId = order?.IdOrder,

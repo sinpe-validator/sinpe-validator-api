@@ -2,6 +2,7 @@ using Application.DTOs;
 using sinpe_validator_api.Web.Endpoints.Orders;
 using sinpe_validator_api.Web.Endpoints.Sms;
 using Web.Endpoints.Orders;
+using Web.Endpoints.Payments;
 
 namespace Web.Endpoints;
 
@@ -65,6 +66,22 @@ public static class EndpointExtensions
             .WithName("ExpireOrder")
             .WithDescription("Marca una orden como expirada")
             .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status500InternalServerError);
+
+        var paymentsGroup = app.MapGroup("/api/payments")
+            .WithName("Payments");
+
+        paymentsGroup.MapGet("/unmatched", GetUnmatchedPaymentsHandler.Handle)
+            .WithName("GetUnmatchedPayments")
+            .WithDescription("Lista los pagos recibidos por SMS para los que el backend no encontró una orden asociada")
+            .Produces<List<UnmatchedPaymentDto>>(StatusCodes.Status200OK);
+
+        paymentsGroup.MapPost("/{idOrderPayment:int}/match", MatchPaymentToOrderHandler.Handle)
+            .WithName("MatchPaymentToOrder")
+            .WithDescription("Asocia un pago sin orden a una orden en espera, aprueba el pago y marca la orden como pagada")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status500InternalServerError);
     }
