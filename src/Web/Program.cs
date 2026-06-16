@@ -4,6 +4,7 @@ using Application.Services.SmsValidation;
 using Application.Services.SmsValidation.Validators;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
+using Infrastructure.Workers;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Web.Endpoints;
@@ -11,7 +12,17 @@ using Web.Endpoints;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddCors();
+// Configurar CORS con origenes explícitos y AllowCredentials para SignalR
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // FRONTEND origin (ajusta según tu entorno)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 builder.Services.AddScoped<ISmsParsingService, SmsParsingService>();
 builder.Services.AddScoped<ISmsValidationService, SmsValidationService>();
 builder.Services.AddScoped<ISmsValidator, DuplicateReferenceValidator>();
@@ -23,6 +34,13 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
+builder.Services.AddHostedService<HeartbeatMonitorWorker>();
+builder.Services.AddSignalR();
+// Registrar NotificationHub
+builder.Services.AddSingleton<Web.Hubs.NotificationHub>();
+// Registrar el sender concreto para SignalR
+builder.Services.AddScoped<Application.Contracts.INotificationSender, Web.Services.SignalRNotificationSender>();
 
 // Database Configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -56,10 +74,7 @@ catch (Exception ex)
 }
 
 app.UseHttpsRedirection();
-app.UseCors(static builder => 
-    builder.AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowAnyOrigin());
+app.UseCors("CorsPolicy");
 
 app.UseFileServer();
 
@@ -69,5 +84,8 @@ app.MapScalarApiReference();
 app.UseExceptionHandler(options => { });
 
 app.MapApiEndpoints();
+
+// Mapear hub de notificaciones (debe ir después de UseCors)
+app.MapHub<Web.Hubs.NotificationHub>("/hubs/notifications");
 
 app.Run();

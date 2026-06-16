@@ -32,6 +32,16 @@ public static class EndpointExtensions
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
 
+        // HeartbeaT
+        var heartbeatGroup = app.MapGroup("/api/heartbeat").WithName("Heartbeat");
+
+        heartbeatGroup.MapPost("/", Web.Endpoints.Heartbeat.ReceiveHeartbeatHandler.Handle)
+            .WithName("ReceiveHeartbeat")
+            .WithDescription("Recibe latidos desde la app Android y actualiza el estado del dispositivo")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status500InternalServerError);
+
         ordersGroup.MapGet("/", GetOrdersHandler.Handle)
             .WithName("GetOrders")
             .WithDescription("Lista las órdenes de pago generadas")

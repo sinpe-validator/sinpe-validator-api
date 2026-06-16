@@ -16,6 +16,7 @@ public class SinpePaymentsDbContext : DbContext
     public DbSet<OrderStatus> OrderStatuses { get; set; }
     public DbSet<PaymentStatus> PaymentStatuses { get; set; }
     public DbSet<FraudAttempt> FraudAttempts { get; set; }
+    public DbSet<DeviceHeartbeat> DeviceHeartbeats { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +47,22 @@ public class SinpePaymentsDbContext : DbContext
         ConfigureReceivedSms(modelBuilder);
         ConfigureOrderPayment(modelBuilder);
         ConfigureFraudAttempt(modelBuilder);
+        ConfigureDeviceHeartbeat(modelBuilder);
+    }
+
+
+    private static void ConfigureDeviceHeartbeat(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DeviceHeartbeat>(entity =>
+        {
+            entity.ToTable("DeviceHeartbeat"); 
+            entity.HasKey(e => e.IdDevice);
+            entity.Property(e => e.IdDevice).ValueGeneratedOnAdd();
+
+            entity.Property(e => e.Name).HasMaxLength(150);
+            entity.Property(e => e.IsActive).HasColumnName("IsActive"); 
+            entity.Property(e => e.LastConnection).HasColumnName("LastConnection");
+        });
     }
 
     private static void ConfigureOrderStatus(ModelBuilder modelBuilder)
