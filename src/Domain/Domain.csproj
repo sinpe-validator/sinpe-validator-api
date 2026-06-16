@@ -7,11 +7,16 @@
 
   <ItemGroup>
     <PackageReference Include="MediatR.Contracts" />
+    <PackageReference Include="MessagePack" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Entities\" />
+    <Folder Include="Common\" />
+    <Folder Include="Constants\" />
+    <Folder Include="Enums\" />
     <Folder Include="Events\" />
+    <Folder Include="Exceptions\" />
+    <Folder Include="ValueObjects\" />
   </ItemGroup>
 
 </Project>

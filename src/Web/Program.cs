@@ -1,27 +1,58 @@
-using sinpe_validator_api.Infrastructure.Data;
+using Application.Contracts;
+using Application.Services;
+using Application.Services.SmsValidation;
+using Application.Services.SmsValidation.Validators;
+using Infrastructure.Data;
+using Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Web.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.AddServiceDefaults();
+// Add services to the container
+builder.Services.AddCors();
+builder.Services.AddScoped<ISmsParsingService, SmsParsingService>();
+builder.Services.AddScoped<ISmsValidationService, SmsValidationService>();
+builder.Services.AddScoped<ISmsValidator, DuplicateReferenceValidator>();
+builder.Services.AddScoped<ISmsValidator, OrderCodeValidator>();
+builder.Services.AddScoped<ISmsValidator, AmountMatchValidator>();
+builder.Services.AddScoped<ISmsValidator, PaymentDateValidator>();
+builder.Services.AddScoped<ISmsRepository, SmsRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
-builder.AddKeyVaultIfConfigured();
-builder.AddApplicationServices();
-builder.AddInfrastructureServices();
-builder.AddWebServices();
+// Database Configuration
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<SinpePaymentsDbContext>(options =>
+    options.UseSqlServer(connectionString)
+);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+try
 {
-    await app.InitialiseDatabaseAsync();
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<SinpePaymentsDbContext>();
+        
+        if (dbContext.Database.CanConnect())
+        {
+            logger.LogInformation("CONEXIÓN A BASE DE DATOS EXITOSA");
+        }
+        else
+        {
+            logger.LogError("NO SE PUDO CONECTAR A LA BASE DE DATOS");
+        }
+    }
 }
-else
+catch (Exception ex)
 {
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    logger.LogError($"ERROR AL CONECTAR: {ex.Message}");
 }
 
 app.UseHttpsRedirection();
@@ -37,10 +68,6 @@ app.MapScalarApiReference();
 
 app.UseExceptionHandler(options => { });
 
-app.Map("/", () => Results.Redirect("/scalar"));
-
-app.MapDefaultEndpoints();
-app.MapEndpoints(typeof(Program).Assembly);
-
+app.MapApiEndpoints();
 
 app.Run();

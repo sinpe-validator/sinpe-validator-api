@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="MessagePack" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
       <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -33,7 +34,11 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Web\Web.csproj" />
-        <ProjectReference Include="..\TestAppHost\TestAppHost.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="TodoLists\Commands\" />
+      <Folder Include="TodoLists\Queries\" />
     </ItemGroup>
 
 </Project>

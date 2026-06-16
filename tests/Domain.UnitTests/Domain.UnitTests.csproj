@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="MessagePack" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="nunit" />
         <PackageReference Include="NUnit.Analyzers">
@@ -22,6 +23,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Domain\Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="ValueObjects\" />
     </ItemGroup>
 
 </Project>
