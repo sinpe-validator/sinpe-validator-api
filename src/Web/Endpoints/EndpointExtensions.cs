@@ -1,6 +1,7 @@
 using Application.DTOs;
 using sinpe_validator_api.Web.Endpoints.Orders;
 using sinpe_validator_api.Web.Endpoints.Sms;
+using Web.Endpoints.Fraud;
 using Web.Endpoints.Orders;
 using Web.Endpoints.Payments;
 
@@ -84,5 +85,14 @@ public static class EndpointExtensions
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status500InternalServerError);
+
+
+        var fraudGroup = app.MapGroup("/api/fraud")
+            .WithName("Fraud");
+
+        fraudGroup.MapGet("/", GetFraudAttemptsHandler.Handle)
+            .WithName("GetFraudAttempts")
+            .WithDescription("Lista todos los intentos de fraude detectados por el sistema")
+            .Produces<List<FraudAttemptResponse>>(StatusCodes.Status200OK);
     }
 }
