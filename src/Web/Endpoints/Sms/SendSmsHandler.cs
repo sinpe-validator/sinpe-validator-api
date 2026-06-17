@@ -87,7 +87,7 @@ public static class SendSmsHandler
                     order.IdStatus = validationResult.OrderStatus.Value;
                 }
             }
-            
+
             var paymentStatus = order is null
                 ? PaymentStatusUnmatched
                 : validationResult.PaymentStatus ?? PaymentStatusUnderReview;
@@ -103,6 +103,27 @@ public static class SendSmsHandler
 
             dbContext.OrderPayments.Add(orderPayment);
             await dbContext.SaveChangesAsync();
+
+            if (!validationResult.IsValid && validationResult.ValidatorName != "DuplicateReferenceValidator")
+            {
+                var inconsistencyType = validationResult.ValidatorName switch
+                {
+                    "AmountMatchValidator" => "AmountMismatch",
+                    "OrderCodeValidator" => "InvalidOrderCode",
+                    "PaymentDateValidator" => "DateMismatch",
+                    _ => validationResult.ValidatorName ?? "Unknown"
+                };
+
+                dbContext.FraudAttempts.Add(new FraudAttempt
+                {
+                    IdSms = receivedSms.IdSms,
+                    IdorderPayment = orderPayment.IdOrderPayment,
+                    InconsistencyType = inconsistencyType,
+                    Detail = validationResult.RejectionReason,
+                    DetectedAt = DateTime.Now
+                });
+                await dbContext.SaveChangesAsync();
+            }
 
             if (validationResult.IsValid && paymentStatus == PaymentStatusApproved)
             {
